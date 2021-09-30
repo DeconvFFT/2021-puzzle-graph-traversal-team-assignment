@@ -210,11 +210,16 @@ def total_mahnatten_distance(state,goal):
 # @param: end: Goal state in the question. It is the state when we encounter @ string.
 def get_path(predecessors, start, end):
         curr = end
-        path = ''
-        while curr!=start:
-                path+=predecessors[curr]["move_string"]
-                curr = predecessors[curr]["predecessor"]
-        return (len(path),path[::-1])
+        path = []   
+        print("np.fromstring(curr,int).reshape(5,5)",np.fromstring(curr,int).reshape(5,5))
+        while not (np.fromstring(curr,int).reshape(5,5) == np.fromstring(start,int).reshape(5,5)).all():
+            print("state: {} move: {}  previous: {}".format(np.fromstring(curr,int).reshape(5,5),predecessors[curr]["move_string"], np.fromstring(predecessors[curr]["predecessor"],int).reshape(5,5)))
+            path.append(predecessors[curr]["move_string"])
+            curr = predecessors[curr]["predecessor"]
+                 
+                    
+
+        return path[::-1]
 
 # return a list of possible successor states
 def successors(state):
@@ -310,22 +315,27 @@ def solve(initial_board):
     #print("state_mat: {}".format(state_mat))
     goal_mat = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19,20],[21,22,23,24,25]])
     movestr = []
-    fringe.put((0, state_mat.tostring(),""))
+    fringe.put((0, state_mat.tostring(),[]))
     count = 0
     visited = [state_mat.tostring()]
     route = ""
+    tinit = total_mahnatten_distance(state_mat,goal_mat)
+    #print("state: {} heuristic: {}".format(state_mat,tinit))
     
     # store the predcessors of the current state
     predecessors = dict()
-
+    ms = ""
     while not fringe.empty():
         (cost, state, routesofar) = fringe.get()
         #print("cost, state_props: {} {}".format(cost, np.fromstring(state_props[0],int).reshape(5,5)))
         if(is_goal(np.fromstring(state,int).reshape(5,5), goal_mat)):
             print("yes got the soultion....")
             print("state_props[0],state_props[1] : {} {}".format(np.fromstring(state,int).reshape(5,5),routesofar))
-            print(get_path(predecessors, state, goal_mat.tostring()))
-            return(np.array(list(routesofar)))
+            #print("predecessors: {}".format(predecessors))
+            #print("count: {}, visited size: {}".format(count, len(visited)))
+            #print("routesofar: {}".format(routesofar))
+
+            return(get_path(predecessors, state_mat.tostring(), goal_mat.tostring()))
         else:
             #print(routesofar)
             minh = np.Infinity
@@ -341,8 +351,7 @@ def solve(initial_board):
                 
                 #h = misplaced_tiles(s,goal_mat)
                 h =  total_mahnatten_distance(s,goal_mat)
-                print("heuristic: {}".format(h))
-                #print(h,move_str)
+                
                 #print(state_props[1])
 
                 # if h+dist <= minh:
@@ -352,15 +361,18 @@ def solve(initial_board):
                     #new_movestr = state_props[1]+ move_str
 
                 #print("count: ", count)
+
                 if not s.tostring() in visited:
-                    fringe.put((h+dist+1, s.tostring(),routesofar+move_str))
-                    visited.append(s.tostring())
+                    fringe.put((h+dist+1, s.tostring(),move_str))
+                    ms+=move_str
                     if not s.tostring() in predecessors.keys():
-                            predecessors[s.tostring()] = {"move_string":move_str, "predecessor":state}
-
+                        predecessors[s.tostring()] = {"move_string":move_str, "predecessor":state}
+                    visited.append(s.tostring())
+                        
             count+=1
+            # if(count>5):
+            #     break
             #print("h, s, move : {} {} {}".format(minh, minhstate, minhstatemove))
-
 
     return False
 
@@ -369,7 +381,9 @@ def solve(initial_board):
 if __name__ == "__main__":
     # if(len(sys.argv) != 2):
     #     raise(Exception("Error: expected a board filename"))
+    log_file = open("logs.log","w")
 
+    sys.stdout = log_file
     start_state = []
     # with open('board0.txt', 'r') as file:
     #     for line in file:
