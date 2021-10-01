@@ -211,9 +211,9 @@ def total_mahnatten_distance(state,goal):
 def get_path(predecessors, start, end):
         curr = end
         path = []   
-        print("np.fromstring(curr,int).reshape(5,5)",np.fromstring(curr,int).reshape(5,5))
+        #print("np.fromstring(curr,int).reshape(5,5)",np.fromstring(curr,int).reshape(5,5))
         while not (np.fromstring(curr,int).reshape(5,5) == np.fromstring(start,int).reshape(5,5)).all():
-            print("state: {} move: {}  previous: {}".format(np.fromstring(curr,int).reshape(5,5),predecessors[curr]["move_string"], np.fromstring(predecessors[curr]["predecessor"],int).reshape(5,5)))
+            #print("state: {} move: {}  previous: {}".format(np.fromstring(curr,int).reshape(5,5),predecessors[curr]["move_string"], np.fromstring(predecessors[curr]["predecessor"],int).reshape(5,5)))
             path.append(predecessors[curr]["move_string"])
             curr = predecessors[curr]["predecessor"]
                  
@@ -315,64 +315,37 @@ def solve(initial_board):
     #print("state_mat: {}".format(state_mat))
     goal_mat = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19,20],[21,22,23,24,25]])
     movestr = []
-    fringe.put((0, state_mat.tostring(),[]))
+    init_priority = total_mahnatten_distance(state_mat, goal_mat)
+    fringe.put((init_priority, state_mat.tostring(),""))
     count = 0
-    visited = [state_mat.tostring()]
-    route = ""
-    tinit = total_mahnatten_distance(state_mat,goal_mat)
-    #print("state: {} heuristic: {}".format(state_mat,tinit))
+    visited = {}
     
     # store the predcessors of the current state
     predecessors = dict()
     ms = ""
     while not fringe.empty():
-        (cost, state, routesofar) = fringe.get()
-        #print("cost, state_props: {} {}".format(cost, np.fromstring(state_props[0],int).reshape(5,5)))
+        (cost, state, route_so_far) = fringe.get()
+        visited[state_mat.tostring()] = cost
         if(is_goal(np.fromstring(state,int).reshape(5,5), goal_mat)):
             print("yes got the soultion....")
-            print("state_props[0],state_props[1] : {} {}".format(np.fromstring(state,int).reshape(5,5),routesofar))
-            #print("predecessors: {}".format(predecessors))
-            #print("count: {}, visited size: {}".format(count, len(visited)))
-            #print("routesofar: {}".format(routesofar))
-
-            return(get_path(predecessors, state_mat.tostring(), goal_mat.tostring()))
+            print("state: {},route :{} ".format(np.fromstring(state,int).reshape(5,5),route_so_far))
+            routelist = route_so_far.split(" ")
+            print("route.split(" "): {}".format(routelist))
+            return routelist
         else:
-            #print(routesofar)
-            minh = np.Infinity
-            minhstate =  None  
-            minhstatemove = "" 
             for (s,move_str) in successors(np.fromstring(state,int).reshape(5,5)):
-                #slist = successors(state_mat)
-                #print("s new: {}".format(s))
-                #print("heuristic(s,goal_mat): {}".format(heuristic(s,goal_mat)))
-                
-                
-                 
-                
-                #h = misplaced_tiles(s,goal_mat)
-                h =  total_mahnatten_distance(s,goal_mat)
-                
-                #print(state_props[1])
-
-                # if h+dist <= minh:
-                #     minh = h+dist
-                #     minhstate = s
-                #     minhstatemove = move_str
-                    #new_movestr = state_props[1]+ move_str
-
-                #print("count: ", count)
-
-                if not s.tostring() in visited:
-                    fringe.put((h+dist+1, s.tostring(),move_str))
-                    ms+=move_str
-                    if not s.tostring() in predecessors.keys():
-                        predecessors[s.tostring()] = {"move_string":move_str, "predecessor":state}
-                    visited.append(s.tostring())
-                        
-            count+=1
-            # if(count>5):
-            #     break
-            #print("h, s, move : {} {} {}".format(minh, minhstate, minhstatemove))
+                route = ""
+                if(route_so_far == ""):
+                    route = move_str
+                else:
+                    route=str( route_so_far + " " + move_str )
+                h = total_mahnatten_distance(s,goal_mat)
+                print("state: {}, h: {}, route: {}",s,h)
+                #h =  total_mahnatten_distance(s,goal_mat)
+                if s.tostring() not in visited:
+                    visited[s.tostring()] = h+cost+1
+                    fringe.put((h+cost+1, s.tostring(),route))
+                count+=1  
 
     return False
 
@@ -383,7 +356,7 @@ if __name__ == "__main__":
     #     raise(Exception("Error: expected a board filename"))
     log_file = open("logs.log","w")
 
-    sys.stdout = log_file
+    #sys.stdout = log_file
     start_state = []
     # with open('board0.txt', 'r') as file:
     #     for line in file:
