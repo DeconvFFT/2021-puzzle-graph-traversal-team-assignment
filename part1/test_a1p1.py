@@ -16,6 +16,8 @@ from pprint import pprint
 ############ Tests ############
 cstate = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]
 board=copy.deepcopy(cstate)
+ROWS = 5
+COLS = 5
 
 def move_right(board, row):
   """Move the given row to one position right"""
@@ -68,6 +70,7 @@ def transpose_board(board):
   return [list(col) for col in zip(*board)]
 
 def path_finder(board, path_):
+  board = np.array(board).reshape(ROWS, COLS).tolist()
   """Uses the output of student's path to reach canonical state"""
   for direction in path_:
     if set(direction).intersection(set(['U','D','R','L'])):
@@ -108,8 +111,8 @@ def get_map_as_list(map_):
 
 ## Check the output of the puzzle
 def check_puzzle(mapX,path_length):
-    path_found=solver2021.solve(copy.deepcopy(mapX))
-    print(get_map_as_list(mapX))
+    path_found=solver2021.solve(mapX)
+    print(list(mapX))
     assert len(path_found)!=0, "No moves!"
     #valid path should be subset
     valid_moves_set={'R1','R2','R3','R4','R5','L1','L2','L3','L4','L5','U1','U2','U3','U4','U5','D1','D2','D3','D4','D5','Oc','Ic','Occ','Icc'}
@@ -123,8 +126,10 @@ def load_map(fname):
     with open(fname,"r") as file:
         lines=file.read().splitlines()
         path_length=int(lines[0])
-        mapX=[[int(i) for i in line.split()] for line in lines[1:]]
-        return mapX,path_length
+        mapX = []
+        for line in lines[1:]:
+            mapX += [ int(i) for i in line.split() ]
+        return tuple(mapX), path_length
 
 @pytest.mark.timeout(300)
 def test_puzzle_2021_case1():
@@ -134,9 +139,4 @@ def test_puzzle_2021_case1():
 @pytest.mark.timeout(900)
 def test_puzzle_2021_case2():
     mapX,path_length = load_map('test_board0.5.txt')
-    check_puzzle(mapX,path_length)
-
-@pytest.mark.timeout(1500)
-def test_puzzle_2021_case3():
-    mapX,path_length = load_map('test_board1.txt')
     check_puzzle(mapX,path_length)
