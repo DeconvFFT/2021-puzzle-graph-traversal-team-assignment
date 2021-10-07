@@ -11,6 +11,8 @@ import numpy as np
 from copy import deepcopy
 from queue import PriorityQueue
 from scipy.spatial.distance import cdist
+from timeit import default_timer
+import heapq
 
 ROWS=5
 COLS=5
@@ -22,22 +24,18 @@ def printable_board(board):
 
 # rotate a row left by 1
 def rotate_left(state, row, step):
-    # https://numpy.org/doc/stable/reference/generated/numpy.roll.html
     state[row,:] = np.roll(state[row,:], -step)
 
 # rotate a row left by 1
 def rotate_right(state, row, step):
-    #https://numpy.org/doc/stable/reference/generated/numpy.roll.html
     state[row,:] = np.roll(state[row,:], step)
 
 # rotate column up by 1
 def move_up(state,column, step):
-    #https://numpy.org/doc/stable/reference/generated/numpy.roll.html
     state[:,column] = np.roll(state[:,column], -step)
 
 # rotate column down by 1
 def move_down(state,column, step):
-    #https://numpy.org/doc/stable/reference/generated/numpy.roll.html
     state[:,column] = np.roll(state[:,column], step)
 
 # rotate outer ring clockwise
@@ -127,54 +125,16 @@ def rotate_inner_counterclock(state,nrows, ncols, step):
 
 # heuristic function
 # calculates number of misplaced tiles
-def misplaced_tiles(state, goal):
+def misplaced_tiles(state, goal, cost_so_far):
     diffarray = np.subtract(state, goal)
     # These lines of code were inspired from https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html
-    # counts number of non zero elements in a numpy array
-    #print(diffarray)
-    return np.count_nonzero(diffarray)
+    return np.count_nonzero(diffarray)+cost_so_far
 
 
 # # calculate row distances
-# def row_dist():
 
 # # calculates manhatten distance of elements
-def total_mahnatten_distance(state,goal):
-    
-    # # init_pos = (r,0)
-    # # goal_pos = (nrow, 0)
-    # # if (init_pos[1] == goal_pos[1]):
-    # #     if(init_pos[0]==0 and goal_pos[0] == ROWS-1) or (goal_pos[0]==0 and init_pos[0] == ROWS-1):
-    # #         mandistance+=1
-    # # elif (init_pos[0] == goal_pos[1]):
-    # #     if(init_pos[1]==0 and goal_pos[1] == ROWS-1) or (goal_pos[1]==0 and init_pos[1] == ROWS-1):
-    # #         mandistance+=1
-
-    # mandistance = 0
-    # #print("start printing manhatten distances .....")
-    # element = state[0][1]
-    # coords = np.argwhere(goal == element)
-    # i,j = 0,1
-    # dist = abs(coords[0][0]-i)+abs(coords[0][1]-j)
-    
-    # rowlen = 4
-
-    
-
-    # dist1 = abs(coords[0][0]-(rowlen-i%rowlen+1)) + abs(coords[0][1]-j)
-    # print(i,j,coords[0],dist, dist1)
-
-    # # for r in range(ROWS):
-    # #     for c in range(COLS):
-    # #         (rg,cg) = np.where(goal == state[r][c])
-    # #         distance = abs(rg-r)+abs(cg-c)
-    # #         mandistance+=distance/5
-    #         #print(" state[r][c]: {}, mandistance: {}".format(state[r][c], distance))
-
-    # print("state : {}, mandistance: {}".format(state, mandistance))
-
-    # return mandistance
-    # val = l1[0][1]
+def total_moves(state,goal, cost_sofar, move_str):
     total_dist = 0
     rows = ROWS
     for r in range(len(state)):
@@ -192,34 +152,65 @@ def total_mahnatten_distance(state,goal):
             ricj = ri+cj
             rjci = rj+ci
             rjcj = rj+cj
+
             manhatten = min(rici,ricj,rjci,rjcj)[0]
+
             total_dist+=manhatten
-    #print(val,idx1,min(rici,ricj,rjci,rjcj))
+    if("I" in move_str):
+        total_dist//=8
+    if ("O" in move_str):
+        total_dist//=16
+    if("L" in move_str or "R" in move_str or "U" in move_str or "D" in move_str):
+        total_dist//=5
+    print("total_dist: {}".format(total_dist))
+    return total_dist+cost_sofar
 
-    #j = rj+cj
-    # i = (idx_1 - idx_2) % rows
-    # j = (idx_2 - idx_1) % rows
-    return total_dist
+# # calculates manhatten distance of elements
 
-# get the path to the solution
-#
-# This function accepts a dictionary of predecessors, start state and end state as input as input 
-# @param: predecesors: A dictionary with mapping from current state to predecessor and the string 
-# used to reach the current state from predecessor. e.g  urr (2, 1), predecessors[curr]["predecessor"] (2, 0), move_str R
-# @param: start: Start state in the question. It is the location of pichu.string
-# @param: end: Goal state in the question. It is the state when we encounter @ string.
-def get_path(predecessors, start, end):
-        curr = end
-        path = []   
-        #print("np.fromstring(curr,int).reshape(5,5)",np.fromstring(curr,int).reshape(5,5))
-        while not (np.fromstring(curr,int).reshape(5,5) == np.fromstring(start,int).reshape(5,5)).all():
-            #print("state: {} move: {}  previous: {}".format(np.fromstring(curr,int).reshape(5,5),predecessors[curr]["move_string"], np.fromstring(predecessors[curr]["predecessor"],int).reshape(5,5)))
-            path.append(predecessors[curr]["move_string"])
-            curr = predecessors[curr]["predecessor"]
-                 
-                    
+def total_moves1(state,goal, cost_sofar):
+    total_dist = 0
+    rows = ROWS
+    lmoves = []
+    rmoves = []
+    umoves = []
+    dmoves = []
+    for r in range(len(state)):
+        for c in range(len(state[0])):
+            idx1 = (r,c)
+            idx2 = np.where(goal == state[r][c])
+            idx1 = (r,c)
+            idx2 = np.where(goal == state[r][c])
+            ri = (idx1[0]-idx2[0])%rows
+            ci = (idx1[1]-idx2[1])%rows
 
-        return path[::-1]
+            rj = (idx2[0]-idx1[0])%rows
+            cj = (idx2[1]-idx1[1])%rows
+
+            rici = ri+ci
+            ricj = ri+cj
+            rjci = rj+ci
+            rjcj = rj+cj
+
+            manhatten = min(rici,ricj,rjci,rjcj)[0]
+            #print("r: {}, c:{}, ri: {}, rj:{}, ci:{}, cj:{}, rici: {}, ricj: {}, rjci: {}, rjcj: {}, manhatten: {}".format(r,c,ri,rj,ci,cj, rici, ricj, rjci, rjcj,manhatten))
+
+            total_dist+=manhatten
+        
+    
+    diffarray = np.subtract(state, goal)
+    misplaced = np.count_nonzero(diffarray)
+    if(misplaced<=5):
+        total_dist//=5
+    elif(misplaced >5 and misplaced <=16):
+        total_dist//=8
+    elif(misplaced>16):
+        total_dist//=16
+
+    print("total_dist: {}".format(total_dist))
+
+    return total_dist+cost_sofar
+
+
 
 # return a list of possible successor states
 def successors(state):
@@ -240,6 +231,7 @@ def successors(state):
         # rotate row right
         state_new = deepcopy(state)
         rotate_right(state_new,r, 1)
+
         move_str = "R"+str(r+1)
         successor_list.append((state_new, move_str))
 
@@ -278,19 +270,18 @@ def successors(state):
     move_str = "Icc"
     successor_list.append((state_new, move_str))
 
-    # for shat in successor_list:
-    #     print("new successor s' : {}".format(shat))
     return successor_list
 
 # check if we've reached the goal
 def is_goal(state, goal):
-    # if(misplaced_tiles(state, goal) ==0):
-    #     print("goal dist: {}",total_mahnatten_distance(state, goal) == 0.0)
-    if(int(total_mahnatten_distance(state, goal)) == 0):   
-        print("goal tiles: {}",misplaced_tiles(state, goal) == 0)
-
+    flat_state = list(state.flatten())
+    #flat_goal = list(goal.flatten())
+    #print("flat_state: {}, flat_goal: {}", flat_state,sorted(flat_state) )
+    if(sorted(flat_state) == flat_state):  
         return True
     return False
+
+
 
 def solve(initial_board):
     """
@@ -303,6 +294,8 @@ def solve(initial_board):
     5. The current code just returns a dummy solution.
     """
     fringe = PriorityQueue()
+    
+    #fringe = []
     # cost of the path travelled so far
     dist = 0
 
@@ -315,8 +308,16 @@ def solve(initial_board):
     #print("state_mat: {}".format(state_mat))
     goal_mat = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19,20],[21,22,23,24,25]])
     movestr = []
-    init_priority = total_mahnatten_distance(state_mat, goal_mat)
+    init_priority = total_moves(state_mat, goal_mat,0, "")
+    #init_priority = total_moves1(state_mat, goal_mat,0)
+
+    #return 10
     fringe.put((init_priority, state_mat.tostring(),""))
+
+    #fringe.append((init_priority, state_mat.tostring(),""))
+    #heapq.heapify(fringe)
+    
+    
     count = 0
     visited = {}
     
@@ -325,42 +326,63 @@ def solve(initial_board):
     ms = ""
     while not fringe.empty():
         (cost, state, route_so_far) = fringe.get()
-        visited[state_mat.tostring()] = cost
+        visited[state] = cost
         if(is_goal(np.fromstring(state,int).reshape(5,5), goal_mat)):
-            print("yes got the soultion....")
-            print("state: {},route :{} ".format(np.fromstring(state,int).reshape(5,5),route_so_far))
             routelist = route_so_far.split(" ")
-            print("route.split(" "): {}".format(routelist))
+            print("routelist: {}".format(routelist))
+
             return routelist
         else:
             for (s,move_str) in successors(np.fromstring(state,int).reshape(5,5)):
+                #break
                 route = ""
                 if(route_so_far == ""):
                     route = move_str
                 else:
                     route=str( route_so_far + " " + move_str )
-                h = total_mahnatten_distance(s,goal_mat)
-                print("state: {}, h: {}, route: {}",s,h)
-                #h =  total_mahnatten_distance(s,goal_mat)
+                cost_so_far=len(route_so_far.split())
+                f = total_moves(s,goal_mat,cost_so_far, move_str)
+                #f = total_moves1(s,goal_mat,cost_so_far)
+
+                #print("h: {}, move: {}".format(f, route))
+
+                print("state: {}, h: {}, moves: {}".format(s, f,route))
+
+                #total_mahnatten_distance(s,goal_mat)
                 if s.tostring() not in visited:
-                    visited[s.tostring()] = h+cost+1
-                    fringe.put((h+cost+1, s.tostring(),route))
-                count+=1  
+                    #visited[s.tostring()] = h+cost+1
+
+                    elem_list = [x[1] for x in fringe.queue]
+                    # #print("elem_list: {}".format(elem_list))
+                    if(s.tostring() in elem_list):
+                        #print("elem_list.index(s.tostring()): {}".format(elem_list.index(s.tostring())))
+                        idx = elem_list.index(s.tostring())
+                        #print("cost_so_far: {}, len(fringe.queue[idx][2]): {}".format(cost_so_far,len(fringe.queue[idx][2].split(" "))))
+                        
+                        #if(cost_so_far<len(fringe.queue[idx][2].split(" "))):
+                        if(f < fringe.queue[idx][0]):
+                            #print("before, fringe.queue[idx], fringe.queue[0]: {}",fringe.queue[idx], fringe.queue[0])
+
+                            fringe.queue[idx], fringe.queue[0] = fringe.queue[0], fringe.queue[idx]
+                            #print("after, fringe.queue[idx], fringe.queue[0]: {}",fringe.queue[idx], fringe.queue[0])
+                            fringe.get()
+
+                    # if s.tostring() not in fringe.queue:
+                    fringe.put((f, s.tostring(),route))
+                    count+=1
+
+                # if(count>=1):
+                #    break
 
     return False
 
 # Please don't modify anything below this line
 #
 if __name__ == "__main__":
-    # if(len(sys.argv) != 2):
-    #     raise(Exception("Error: expected a board filename"))
-    log_file = open("logs.log","w")
+    if(len(sys.argv) != 2):
+        raise(Exception("Error: expected a board filename"))
 
-    #sys.stdout = log_file
     start_state = []
-    # with open('board0.txt', 'r') as file:
-    #     for line in file:
-    #         start_state += [ int(i) for i in line.split() ]
     with open(sys.argv[1], 'r') as file:
         for line in file:
             start_state += [ int(i) for i in line.split() ]
@@ -372,6 +394,12 @@ if __name__ == "__main__":
 
     print("Solving...")
     print(type(start_state))
+
+    start_solve = default_timer()
     route = solve(tuple(start_state))
+    end_solve = default_timer()
+
+    solve_time = end_solve - start_solve
+    print("Time take to reach the solution: {}".format(solve_time))
 
     print("Solution found in " + str(len(route)) + " moves:" + "\n" + " ".join(route))
