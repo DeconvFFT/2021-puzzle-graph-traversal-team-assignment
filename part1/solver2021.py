@@ -123,17 +123,9 @@ def rotate_inner_counterclock(state,nrows, ncols, step):
     state[nrows-2,mincol+2] = bl
 
 
-# heuristic function
-# calculates number of misplaced tiles
-def misplaced_tiles(state, goal, cost_so_far):
-    diffarray = np.subtract(state, goal)
-    # These lines of code were inspired from https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html
-    return np.count_nonzero(diffarray)+cost_so_far
+# Heuristic 1
+# Calculate walking distance of tile from state to goal state
 
-
-# # calculate row distances
-
-# # calculates manhatten distance of elements
 def total_moves(state,goal, cost_sofar, move_str):
     total_dist = 0
     rows = ROWS
@@ -162,10 +154,10 @@ def total_moves(state,goal, cost_sofar, move_str):
         total_dist//=16
     if("L" in move_str or "R" in move_str or "U" in move_str or "D" in move_str):
         total_dist//=5
-    print("total_dist: {}".format(total_dist))
     return total_dist+cost_sofar
 
-# # calculates manhatten distance of elements
+# Heuristic 2
+# divide sum of walking distance with number of misplaced tiles
 
 def total_moves1(state,goal, cost_sofar):
     total_dist = 0
@@ -192,24 +184,18 @@ def total_moves1(state,goal, cost_sofar):
             rjcj = rj+cj
 
             manhatten = min(rici,ricj,rjci,rjcj)[0]
-            #print("r: {}, c:{}, ri: {}, rj:{}, ci:{}, cj:{}, rici: {}, ricj: {}, rjci: {}, rjcj: {}, manhatten: {}".format(r,c,ri,rj,ci,cj, rici, ricj, rjci, rjcj,manhatten))
-
             total_dist+=manhatten
         
-    
     diffarray = np.subtract(state, goal)
     misplaced = np.count_nonzero(diffarray)
-    if(misplaced<=5):
-        total_dist//=5
-    elif(misplaced >5 and misplaced <=16):
-        total_dist//=8
-    elif(misplaced>16):
-        total_dist//=16
+    return total_dist//misplaced+cost_sofar
 
-    print("total_dist: {}".format(total_dist))
-
-    return total_dist+cost_sofar
-
+# heuristic 3
+# calculates number of misplaced tiles
+def misplaced_tiles(state, goal, cost_so_far):
+    diffarray = np.subtract(state, goal)
+    # These lines of code were inspired from https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html
+    return np.count_nonzero(diffarray)+cost_so_far
 
 
 # return a list of possible successor states
@@ -275,14 +261,11 @@ def successors(state):
 # check if we've reached the goal
 def is_goal(state, goal):
     flat_state = list(state.flatten())
-    #flat_goal = list(goal.flatten())
-    #print("flat_state: {}, flat_goal: {}", flat_state,sorted(flat_state) )
     if(sorted(flat_state) == flat_state):  
         return True
     return False
 
-
-
+# solve using search algorithm 2
 def solve(initial_board):
     """
     1. This function should return the solution as instructed in assignment, consisting of a list of moves like ["R2","D2","U1"].
@@ -294,47 +277,26 @@ def solve(initial_board):
     5. The current code just returns a dummy solution.
     """
     fringe = PriorityQueue()
-    
-    #fringe = []
-    # cost of the path travelled so far
-    dist = 0
-
-    from itertools import count
-
-    # a global
-    tiebreaker = count()
-    #print(type(initial_board))
     state_mat = np.asarray(initial_board).reshape(5,5)
-    #print("state_mat: {}".format(state_mat))
     goal_mat = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19,20],[21,22,23,24,25]])
-    movestr = []
+
+    # get cost for initial state
     init_priority = total_moves(state_mat, goal_mat,0, "")
-    #init_priority = total_moves1(state_mat, goal_mat,0)
-
-    #return 10
     fringe.put((init_priority, state_mat.tostring(),""))
-
-    #fringe.append((init_priority, state_mat.tostring(),""))
-    #heapq.heapify(fringe)
-    
-    
-    count = 0
-    visited = {}
     
     # store the predcessors of the current state
     predecessors = dict()
     ms = ""
     while not fringe.empty():
         (cost, state, route_so_far) = fringe.get()
-        visited[state] = cost
+        #visited[state] = cost
         if(is_goal(np.fromstring(state,int).reshape(5,5), goal_mat)):
             routelist = route_so_far.split(" ")
-            print("routelist: {}".format(routelist))
+            #print("routelist: {}".format(routelist))
 
             return routelist
         else:
             for (s,move_str) in successors(np.fromstring(state,int).reshape(5,5)):
-                #break
                 route = ""
                 if(route_so_far == ""):
                     route = move_str
@@ -342,37 +304,7 @@ def solve(initial_board):
                     route=str( route_so_far + " " + move_str )
                 cost_so_far=len(route_so_far.split())
                 f = total_moves(s,goal_mat,cost_so_far, move_str)
-                #f = total_moves1(s,goal_mat,cost_so_far)
-
-                #print("h: {}, move: {}".format(f, route))
-
-                print("state: {}, h: {}, moves: {}".format(s, f,route))
-
-                #total_mahnatten_distance(s,goal_mat)
-                if s.tostring() not in visited:
-                    #visited[s.tostring()] = h+cost+1
-
-                    elem_list = [x[1] for x in fringe.queue]
-                    # #print("elem_list: {}".format(elem_list))
-                    if(s.tostring() in elem_list):
-                        #print("elem_list.index(s.tostring()): {}".format(elem_list.index(s.tostring())))
-                        idx = elem_list.index(s.tostring())
-                        #print("cost_so_far: {}, len(fringe.queue[idx][2]): {}".format(cost_so_far,len(fringe.queue[idx][2].split(" "))))
-                        
-                        #if(cost_so_far<len(fringe.queue[idx][2].split(" "))):
-                        if(f < fringe.queue[idx][0]):
-                            #print("before, fringe.queue[idx], fringe.queue[0]: {}",fringe.queue[idx], fringe.queue[0])
-
-                            fringe.queue[idx], fringe.queue[0] = fringe.queue[0], fringe.queue[idx]
-                            #print("after, fringe.queue[idx], fringe.queue[0]: {}",fringe.queue[idx], fringe.queue[0])
-                            fringe.get()
-
-                    # if s.tostring() not in fringe.queue:
-                    fringe.put((f, s.tostring(),route))
-                    count+=1
-
-                # if(count>=1):
-                #    break
+                fringe.put((f, s.tostring(),route))
 
     return False
 

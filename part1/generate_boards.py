@@ -145,7 +145,7 @@ if __name__ == "__main__":
     new_state = deepcopy(start_state)
 
     #,"R2","Occ","U3","D4"
-    moves = ["Icc","U2","R2","Occ","U3","D4","L1"]
+    moves = ["Icc","U2","R2","Occ","U3","D4"]
     print("start_state: {}".format(start_state))
     
     for move in moves:

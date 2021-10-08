@@ -58,3 +58,27 @@ if __name__ == '__main__':
     k = 1
     
     #print(distance(init, 5,goal))
+
+
+                #  search algorithm 3  
+
+                # #total_mahnatten_distance(s,goal_mat)
+                # if s.tostring() not in visited:
+                #     #visited[s.tostring()] = h+cost+1
+
+                #     elem_list = [x[1] for x in fringe.queue]
+                #     # #print("elem_list: {}".format(elem_list))
+                #     if(s.tostring() in elem_list):
+                #         #print("elem_list.index(s.tostring()): {}".format(elem_list.index(s.tostring())))
+                #         idx = elem_list.index(s.tostring())
+                #         #print("cost_so_far: {}, len(fringe.queue[idx][2]): {}".format(cost_so_far,len(fringe.queue[idx][2].split(" "))))
+                        
+                #         #if(cost_so_far<len(fringe.queue[idx][2].split(" "))):
+                #         if(f < fringe.queue[idx][0]):
+                #             #print("before, fringe.queue[idx], fringe.queue[0]: {}",fringe.queue[idx], fringe.queue[0])
+
+                #             fringe.queue[idx], fringe.queue[0] = fringe.queue[0], fringe.queue[idx]
+                #             #print("after, fringe.queue[idx], fringe.queue[0]: {}",fringe.queue[idx], fringe.queue[0])
+                #             fringe.get()
+
+                    # if s.tostring() not in fringe.queue:
