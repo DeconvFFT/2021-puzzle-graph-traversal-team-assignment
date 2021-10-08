@@ -85,6 +85,4 @@ The branching factor is 24, because we are generating 24 states from each board.
 
 ### If the solution can be reached in 7 moves,  about  how  many  states  would  we  need  to  explore  before  wefound it if we used BFS instead of A* search?
 
-If we end up finding a solution after the first move after exploring 24^6 states, we would end up exploring only 24^6 states, if we end up exploring every state on the 7th level, we would need to explore 24^6+x states, and we would end up exploring 24^7 in the worst case.
-
-So, we would end up exploring 24^7 states.
+We would need to explore approximately, 1+24+24^2+24^3+24^4+24^5+24^6 = 119411801 states in the worst case. In the best case, we need to explore, 1+24+24^2+24^3+24^4+24^5+1 = 8308826 states.
