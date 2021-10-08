@@ -57,7 +57,6 @@ def rotate_outer_clock(state,nrows, ncols, step):
     state[0+1,ncols-1] = tr
 
 # rotate outer ring counter clockwise
-# rotate outer ring clockwise
 def rotate_outer_counterclock(state,nrows, ncols, step):
     step%=nrows
     tl = state[0,0]
@@ -123,10 +122,18 @@ def rotate_inner_counterclock(state,nrows, ncols, step):
     state[nrows-2,mincol+2] = bl
 
 
-# Heuristic 1
+# Heuristic function for the search algorithm
 # Calculate walking distance of tile from state to goal state
+#
+# This function takes four parameters as input current state, goal state, cost_so_far and move_str
+# and returns the walking distance averaged by a factor that is decided by move_str
+# @param: state: Current state
+# @param: goal: Goal state
+# @param: cost_so_far: Cost to reach the state from initial state
+# @param: move_str: Move made to generate that successor e.g L1
 
-def total_moves(state,goal, cost_sofar, move_str):
+
+def walking_distance(state,goal, cost_sofar, move_str):
     total_dist = 0
     rows = ROWS
     for r in range(len(state)):
@@ -159,7 +166,7 @@ def total_moves(state,goal, cost_sofar, move_str):
 # Heuristic 2
 # divide sum of walking distance with number of misplaced tiles
 
-def total_moves1(state,goal, cost_sofar):
+def walking_distance1(state,goal, cost_sofar):
     total_dist = 0
     rows = ROWS
     lmoves = []
@@ -194,11 +201,17 @@ def total_moves1(state,goal, cost_sofar):
 # calculates number of misplaced tiles
 def misplaced_tiles(state, goal, cost_so_far):
     diffarray = np.subtract(state, goal)
-    # These lines of code were inspired from https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html
+    # These lines of code were adapted from: https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html
+    # count non zero elements in arrat
     return np.count_nonzero(diffarray)+cost_so_far
+    # End of adapted code from: https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html
 
 
-# return a list of possible successor states
+# Get list of successors of given house_map state
+#
+# This function take housemap as input and generates a housemap with random placement of pichu
+# @param: state: current state configuration
+
 def successors(state):
     #print(state)
     successor_list = []
@@ -258,14 +271,23 @@ def successors(state):
 
     return successor_list
 
-# check if we've reached the goal
-def is_goal(state, goal):
+# check if the goal state has been reached.
+#
+# This function returns if the state is equal to it's sorted configuration
+# @param: state: current state configuration
+def is_goal(state):
     flat_state = list(state.flatten())
     if(sorted(flat_state) == flat_state):  
         return True
     return False
 
 # solve using search algorithm 2
+# - route_list is the number of moves required to navigate from start to finish, or -1
+#    if no such route exists
+# - route_list is an array of strings indicating the path, consisting of chacacters like Icc, Occ, Ic, Oc and Ucol, Lcol, Rrow, and Drow
+# - (for up, down, left, right). col indicates column number, row indicates row number
+# - cost_so_far: The cost of reaching the current state from the initial state. 
+
 def solve(initial_board):
     """
     1. This function should return the solution as instructed in assignment, consisting of a list of moves like ["R2","D2","U1"].
@@ -281,18 +303,13 @@ def solve(initial_board):
     goal_mat = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19,20],[21,22,23,24,25]])
 
     # get cost for initial state
-    init_priority = total_moves(state_mat, goal_mat,0, "")
+    init_priority = walking_distance(state_mat, goal_mat,0, "")
     fringe.put((init_priority, state_mat.tostring(),""))
     
-    # store the predcessors of the current state
-    predecessors = dict()
-    ms = ""
     while not fringe.empty():
         (cost, state, route_so_far) = fringe.get()
-        #visited[state] = cost
-        if(is_goal(np.fromstring(state,int).reshape(5,5), goal_mat)):
+        if(is_goal(np.fromstring(state,int).reshape(5,5))):
             routelist = route_so_far.split(" ")
-            #print("routelist: {}".format(routelist))
 
             return routelist
         else:
@@ -303,7 +320,7 @@ def solve(initial_board):
                 else:
                     route=str( route_so_far + " " + move_str )
                 cost_so_far=len(route_so_far.split())
-                f = total_moves(s,goal_mat,cost_so_far, move_str)
+                f = walking_distance(s,goal_mat,cost_so_far, move_str)
                 fringe.put((f, s.tostring(),route))
 
     return False
@@ -326,12 +343,15 @@ if __name__ == "__main__":
 
     print("Solving...")
     print(type(start_state))
-
+   
+    # code to check time of execution for solve
     start_solve = default_timer()
     route = solve(tuple(start_state))
+
     end_solve = default_timer()
 
     solve_time = end_solve - start_solve
-    print("Time take to reach the solution: {}".format(solve_time))
+    #print("Time take to reach the solution: {}".format(solve_time))
+    # end of code to check execution for solve
 
     print("Solution found in " + str(len(route)) + " moves:" + "\n" + " ".join(route))
