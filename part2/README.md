@@ -24,7 +24,7 @@ Solution for this cost function was easy to find overall.
 
 The total cost would be calculated by heuristic cost, current_cost(in this total distance covered taken to reach to the current node), and segment length of successor node from the current node given in the `road_segment` dataset
 
-`heuristic_cost + current_cost + `
+`heuristic_cost + current_cost + segment_length`
 
 
 ### Time
