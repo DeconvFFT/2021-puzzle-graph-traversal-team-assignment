@@ -35,8 +35,6 @@ def succ(state):
 #returns the cost:
 def cost(succ_step, team_wanted, random_teammates_number,not_to_work_with):
     cost = len(succ_step)*5
-    #print(succ_step)
-
 
 
     #is the same team?
@@ -50,15 +48,23 @@ def cost(succ_step, team_wanted, random_teammates_number,not_to_work_with):
             #count number of 'xxx' and skip the cost increment for that many times if team member is random
             
             for requested_team_member in team_wanted[succ_team_member]:
+                if requested_team_member == 'xxx' or requested_team_member == 'zzz':
+                    continue
                 if requested_team_member not in succ_team.split('-'):
-                    if count >= random_teammates_number[succ_team_member]:
-                        cost = cost + 3
-                        count_for_wrong_teammate +=1
-                    else:
-                        count = count+1
+                    # print("requested_team_member: {}, succ_team.split('-'): {}, count_for_wrong_teammate: {} "
+                    # .format(requested_team_member,succ_team.split('-'),count_for_wrong_teammate))
+                    #if count >= random_teammates_number[succ_team_member]:
+                    cost = cost + 3
+                    count_for_wrong_teammate +=1
+                    #else:
+                    #    count = count+1
+
     #is team size same
     for succ_team in succ_step:
         for succ_team_member in succ_team.split('-'):
+            # print(team_wanted[succ_team_member], len(team_wanted[succ_team_member]))
+            # print(succ_team.split('-'),len(succ_team.split('-')))
+            # print('-----')
             if len(succ_team.split('-')) != len(team_wanted[succ_team_member]):
                 cost = cost+2
                 count_for_wrong_team_size +=1
@@ -124,11 +130,14 @@ def solver(input_file):
     
     for i in range(len(grups_survey)):
         username.append(grups_survey[i][0])
+
         team_wanted[grups_survey[i][0]] = grups_survey[i][1].split("-")
         not_to_work_with[grups_survey[i][0]] = grups_survey[i][2].split(",")
+
         random_teammates_number_xxx[grups_survey[i][0]] = grups_survey[i][1].split("-").count("xxx")
         random_teammates_number_zzz[grups_survey[i][0]] = grups_survey[i][1].split("-").count("zzz")
 
+    print(team_wanted)
     # print(sum(random_teammates_number_zzz.values()))
     # print(sum(random_teammates_number_xxx.values()))
     
@@ -192,7 +201,6 @@ def solver(input_file):
 
 
 
-    print("-----")
     #second loop to restart randomly:
     while True:
         #print(len(closed))
