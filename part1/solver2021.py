@@ -156,11 +156,11 @@ def walking_distance(state,goal, cost_sofar, move_str):
 
             total_dist+=manhatten
     if("I" in move_str):
-        total_dist//=8
+        total_dist/=8
     if ("O" in move_str):
-        total_dist//=16
+        total_dist/=16
     if("L" in move_str or "R" in move_str or "U" in move_str or "D" in move_str):
-        total_dist//=5
+        total_dist/=5
     return total_dist+cost_sofar
 
 # Heuristic 2
