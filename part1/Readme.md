@@ -31,6 +31,19 @@ Sum of walking distances between the current state of a tiles in the puzzle to t
 Cost of reaching the goal configuration from the initial configuration. It is taken as f(s) = h(s) + g(s). Here, g(s) is the length of the route travelled so far to reach the current state. For example, we reach a state with the moves L1, R2, Icc; then g(s) for that state would be 3. and f(s) would be h(s)+3.
 
 ## Working of the search algorithm
+Search algorithm works as follows:
+- Check if the initial state is the goal state.
+- If it is, return "" 
+- If not, calculate heuristic for that state and add it to thr fringe.
+- Till the fringe is not empty, Repeat:
+    - Remove a state from the fringe and check if it is a goal state.
+    - If it is, return the new route to the goal state.
+    - If not, generate the successors of that state as follows:
+        - Generate a new state for each possible move that can be made on the current board. 
+        - For each successor, do the following: 
+            - Calculate heuristic for the successor.
+            - Insert that successor into the fringe.
+
 
 ## Experiments 
 
